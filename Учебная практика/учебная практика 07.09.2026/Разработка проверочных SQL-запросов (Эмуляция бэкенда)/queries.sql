@@ -17,20 +17,28 @@ ORDER BY p.company_name ASC;
 
 -- =====================================================
 -- 2. Транзакция: добавление нового партнера и его первой отгрузки
+--    Вариант для таблиц с GENERATED ALWAYS AS IDENTITY
 -- =====================================================
+SELECT setval('partners_partner_id_seq', COALESCE((SELECT MAX(partner_id) FROM partners), 0));
+SELECT setval('shipments_shipment_id_seq', COALESCE((SELECT MAX(shipment_id) FROM shipments), 0));
+SELECT setval('shipment_items_shipment_item_id_seq', COALESCE((SELECT MAX(shipment_item_id) FROM shipment_items), 0));
+
 BEGIN;
 
-INSERT INTO partners (partner_id, company_name, inn, contact_email, phone, rating)
-VALUES (4, 'ООО "Тестовый партнер"', '1234567890', 'test_partner@example.com', '+79000000000', 4.7)
-ON CONFLICT (partner_id) DO NOTHING;
-
-INSERT INTO shipments (shipment_id, partner_id, shipment_date, total_amount)
-VALUES (105, 4, '2026-09-12', 2500.00)
-ON CONFLICT (shipment_id) DO NOTHING;
-
-INSERT INTO shipment_items (shipment_item_id, shipment_id, product_id, quantity, unit_price, line_total)
-VALUES (5, 105, 1, 5, 500.0000, 2500.00)
-ON CONFLICT (shipment_item_id) DO NOTHING;
+WITH new_partner AS (
+    INSERT INTO partners (company_name, inn, contact_email, phone, rating)
+    VALUES ('ООО "Тестовый партнер"', '1234567890', 'test_partner@example.com', '+79000000000', 4.7)
+    RETURNING partner_id
+),
+new_shipment AS (
+    INSERT INTO shipments (partner_id, shipment_date, total_amount)
+    SELECT partner_id, '2026-09-12', 2500.00
+    FROM new_partner
+    RETURNING shipment_id, partner_id
+)
+INSERT INTO shipment_items (shipment_id, product_id, quantity, unit_price, line_total)
+SELECT shipment_id, 1, 5, 500.0000, 2500.00
+FROM new_shipment;
 
 COMMIT;
 
