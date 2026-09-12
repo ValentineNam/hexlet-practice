@@ -45,6 +45,7 @@ COMMIT;
 -- =====================================================
 -- 3. История отгрузок конкретного партнера за период
 --    Пример: партнер с ID = 2, период: 2026-03-01 ... 2026-03-31
+--    Выводит детальную историю по позициям и итоговую сумму по отгрузке
 -- =====================================================
 SELECT
     s.shipment_id,
@@ -52,7 +53,8 @@ SELECT
     pr.product_name,
     si.quantity,
     si.unit_price,
-    si.line_total
+    si.line_total,
+    s.total_amount AS shipment_total_amount
 FROM shipments AS s
 JOIN shipment_items AS si
     ON si.shipment_id = s.shipment_id
