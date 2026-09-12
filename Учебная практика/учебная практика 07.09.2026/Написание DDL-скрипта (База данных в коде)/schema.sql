@@ -1,6 +1,5 @@
 -- =====================================================
--- 3NF: корректная схема для партнеров, товаров,
--- шапки отгрузки и строк отгрузки
+-- Final 3NF schema for PostgreSQL
 -- =====================================================
 
 DROP TABLE IF EXISTS shipment_items;
@@ -9,21 +8,21 @@ DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS partners;
 
 CREATE TABLE partners (
-    partner_id      INTEGER PRIMARY KEY,
+    partner_id      INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     company_name    VARCHAR(255) NOT NULL,
-    inn             CHAR(10) NOT NULL UNIQUE,
+    inn             VARCHAR(12) NOT NULL UNIQUE CHECK (inn ~ '^[0-9]{10,12}$'),
     contact_email   VARCHAR(255) NOT NULL UNIQUE,
     phone           VARCHAR(20) NOT NULL,
     rating          DECIMAL(3,2) NOT NULL CHECK (rating >= 0 AND rating <= 5)
 );
 
 CREATE TABLE products (
-    product_id      INTEGER PRIMARY KEY,
+    product_id      INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     product_name    VARCHAR(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE shipments (
-    shipment_id     INTEGER PRIMARY KEY,
+    shipment_id     INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     partner_id      INTEGER NOT NULL,
     shipment_date   DATE NOT NULL,
     total_amount    DECIMAL(12,2) NOT NULL CHECK (total_amount >= 0),
@@ -35,7 +34,7 @@ CREATE TABLE shipments (
 );
 
 CREATE TABLE shipment_items (
-    shipment_item_id INTEGER PRIMARY KEY,
+    shipment_item_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     shipment_id      INTEGER NOT NULL,
     product_id       INTEGER NOT NULL,
     quantity         INTEGER NOT NULL CHECK (quantity > 0),
