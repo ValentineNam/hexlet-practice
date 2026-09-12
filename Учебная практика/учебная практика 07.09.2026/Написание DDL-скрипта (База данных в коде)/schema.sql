@@ -1,0 +1,40 @@
+-- Удаление в правильном порядке: сначала зависимые таблицы, потом справочники
+DROP TABLE IF EXISTS sales_history;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS partners;
+
+-- Таблица партнеров
+CREATE TABLE partners (
+    partner_id      INTEGER PRIMARY KEY,
+    company_name    VARCHAR(255) NOT NULL,
+    inn             CHAR(10) NOT NULL UNIQUE,
+    contact_email   VARCHAR(255) NOT NULL UNIQUE,
+    phone           VARCHAR(20) NOT NULL,
+    rating          DECIMAL(3,2) NOT NULL CHECK (rating >= 0 AND rating <= 5)
+);
+
+-- Таблица товаров
+CREATE TABLE products (
+    product_id      INTEGER PRIMARY KEY,
+    product_name    VARCHAR(255) NOT NULL UNIQUE
+);
+
+-- Таблица истории продаж/отгрузок
+CREATE TABLE sales_history (
+    sale_id         INTEGER PRIMARY KEY,
+    partner_id      INTEGER NOT NULL,
+    product_id      INTEGER NOT NULL,
+    sale_date       DATE NOT NULL,
+    quantity        INTEGER NOT NULL CHECK (quantity > 0),
+    total_amount    DECIMAL(12,2) NOT NULL CHECK (total_amount >= 0),
+
+    CONSTRAINT fk_sales_history_partner
+        FOREIGN KEY (partner_id)
+        REFERENCES partners(partner_id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_sales_history_product
+        FOREIGN KEY (product_id)
+        REFERENCES products(product_id)
+        ON DELETE RESTRICT
+);
