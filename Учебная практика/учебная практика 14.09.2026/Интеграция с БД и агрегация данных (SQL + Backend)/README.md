@@ -79,6 +79,7 @@ DB_PASSWORD=
 3. Запустите скрипт:
 
 ```bash
+source .venv/bin/activate
 python backend_integration.py
 ```
 
