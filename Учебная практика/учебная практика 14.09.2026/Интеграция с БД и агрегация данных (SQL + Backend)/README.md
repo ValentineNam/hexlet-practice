@@ -6,10 +6,11 @@
 
 В проекте используется нормализованная 3NF-модель:
 - `partners`
+- `products`
 - `shipments`
 - `shipment_items`
 
-Это соответствует текущей схеме, в которой данные по продажам хранятся в таблицах `shipments` и `shipment_items`, а не в одном денормализованном `sales_history`.
+Это соответствует реальной схеме, которая сейчас есть в PostgreSQL: таблицы `partners`, `products`, `shipments` и `shipment_items`. Данные по продажам хранятся в таблицах `shipments` и `shipment_items`, а не в одном денормализованном `sales_history`.
 
 ## Что реализовано
 
@@ -55,26 +56,30 @@ return 15
 
 ## Как запустить
 
-1. Установите зависимости:
+1. Установите зависимости в виртуальном окружении:
 
 ```bash
-pip install psycopg2-binary
+python3 -m venv .venv
+source .venv/bin/activate
+pip install psycopg2-binary python-dotenv
 ```
 
-2. Проверьте, что PostgreSQL запущен, и укажите параметры подключения через переменные окружения:
+2. Создайте файл `.env` в папке проекта и укажите параметры подключения из PGAdmin, например:
 
-```bash
-export DB_HOST=localhost
-export DB_PORT=5432
-export DB_NAME=postgres
-export DB_USER=postgres
-export DB_PASSWORD=postgres
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=practice_2026_autumn
+DB_USER=v.nam
+DB_PASSWORD=
 ```
+
+> Если у вас другой логин, имя БД или пароль, подставьте их из настроек сервера в PGAdmin.
 
 3. Запустите скрипт:
 
 ```bash
-python3 backend_integration.py
+python backend_integration.py
 ```
 
 ## Пример результата
