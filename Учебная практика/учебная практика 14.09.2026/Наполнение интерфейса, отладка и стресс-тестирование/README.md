@@ -71,6 +71,10 @@ http://127.0.0.1:8002/api/partners
   - 5/10/15% по бизнес-логике;
   - корректную работу API и UI в связке с PostgreSQL.
 
+## Пример страницы
+
+![Пример страницы](page_with_parsed_db_data.png)
+
 ## Поля таблицы `partners`
 
 - `partner_id`
