@@ -2,18 +2,15 @@ import { renderPartners } from './render.js';
 
 const list = document.getElementById('partnersList');
 
-async function loadPartners() {
-  const response = await fetch('/api/partners');
+function loadPartners() {
+  const partners = Array.isArray(window.partnersDb) ? window.partnersDb : [];
 
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
+  if (!partners.length) {
+    list.innerHTML = '<p class="empty-state">Нет данных партнеров.</p>';
+    return;
   }
 
-  const partners = await response.json();
   renderPartners(list, partners);
 }
 
-loadPartners().catch((error) => {
-  console.error('Failed to load partners:', error);
-  list.innerHTML = '<p class="empty-state">Не удалось загрузить данные партнеров.</p>';
-});
+loadPartners();
