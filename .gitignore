@@ -25,3 +25,6 @@ htmlcov/
 # IDE / OS
 .vscode/
 .DS_Store
+
+# Project support files
+DEV/

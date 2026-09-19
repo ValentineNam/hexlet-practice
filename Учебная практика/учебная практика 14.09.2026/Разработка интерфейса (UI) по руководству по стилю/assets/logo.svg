@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 80" role="img" aria-label="Company logo">
+  <rect width="220" height="80" fill="#f5f5f5"/>
+  <g transform="translate(2 8)">
+    <rect x="0" y="0" width="58" height="58" rx="10" fill="#1b1b1b"/>
+    <path d="M17 17h24v6H17zm0 12h24v6H17zm0 12h18v6H17z" fill="#f5f5f5"/>
+  </g>
+  <text x="78" y="48" font-size="22" font-family="Segoe UI, Arial, sans-serif" fill="#1b1b1b" letter-spacing="0.5">CRM</text>
+</svg>

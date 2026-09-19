@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="CRM icon">
+  <rect width="64" height="64" fill="#f5f5f5" stroke="#1b1b1b" stroke-width="2" rx="8"/>
+  <rect x="14" y="14" width="36" height="36" fill="#1b1b1b" rx="6"/>
+  <path d="M22 22h12v20H22zm16 0h4v20h-4zm-16 4h8v4h-8zm0 8h8v4h-8z" fill="#f5f5f5"/>
+</svg>
