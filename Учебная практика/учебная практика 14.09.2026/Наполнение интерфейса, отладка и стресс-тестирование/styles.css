@@ -45,6 +45,15 @@ body {
   min-width: 0;
 }
 
+.app-icon {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #ffffff;
+  display: block;
+}
+
 h1 {
   margin: 0;
   font-size: clamp(1.2rem, 2vw, 2rem);
