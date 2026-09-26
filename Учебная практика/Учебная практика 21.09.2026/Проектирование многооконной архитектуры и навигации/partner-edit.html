@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#e7e8e4" />
+    <title>CRM: Карточка партнера [Добавление]</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="index.html" aria-label="CRM, реестр партнеров">
+          <img src="assets/favicon.svg" alt="" width="36" height="36" />
+          <span>CRM <span class="brand-divider">/</span> Партнеры</span>
+        </a>
+        <span class="topbar-note">Управление отношениями</span>
+      </header>
+
+      <main>
+        <section id="partnerEditWindow" aria-labelledby="editTitle">
+          <div class="page-heading page-heading-edit">
+            <div>
+              <p class="eyebrow" id="editMode">Добавление</p>
+              <h1 id="editTitle">Карточка партнера [Добавление]</h1>
+            </div>
+            <button class="button button-secondary" id="backButton" type="button">
+              <span class="button-icon" aria-hidden="true">←</span>
+              Назад
+            </button>
+          </div>
+          <div class="edit-surface">
+            <p class="edit-context-label" id="editContextLabel">Новая запись</p>
+            <h2 id="editPartnerName">Новый партнер</h2>
+            <p class="edit-context-copy">Карточка открыта. Поля данных будут добавлены на следующем этапе.</p>
+          </div>
+        </section>
+      </main>
+      <footer class="app-footer"><span>Партнерская сеть</span><span>CRM · 2026</span></footer>
+    </div>
+
+    <script src="partners-data.js"></script>
+    <script type="module" src="partner-edit-app.js"></script>
+  </body>
+</html>
