@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#e7e8e4" />
+    <title>CRM: Реестр партнеров</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="index.html" aria-label="CRM, реестр партнеров">
+          <img src="assets/favicon.svg" alt="" width="36" height="36" />
+          <span>CRM <span class="brand-divider">/</span> Партнеры</span>
+        </a>
+        <span class="topbar-note">Управление отношениями</span>
+      </header>
+      <main id="mainWindow" aria-labelledby="mainTitle">
+        <div class="page-heading">
+          <div><p class="eyebrow">Главная</p><h1 id="mainTitle">Реестр партнеров</h1></div>
+          <button class="button button-primary" id="addPartnerButton" type="button"><span class="button-icon" aria-hidden="true">+</span>Добавить партнера</button>
+        </div>
+        <div class="list-toolbar"><span id="partnerCount" class="list-count"></span><span>Актуальные данные из базы</span></div>
+        <div id="partnersList" class="partners-list" aria-label="Список партнеров" aria-live="polite"></div>
+      </main>
+      <footer class="app-footer"><span>Партнерская сеть</span><span>CRM · 2026</span></footer>
+    </div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

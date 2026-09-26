@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#e7e8e4" />
+    <title>CRM: Карточка партнера [Добавление]</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="index.html" aria-label="CRM, реестр партнеров"><img src="assets/favicon.svg" alt="" width="36" height="36" /><span>CRM <span class="brand-divider">/</span> Партнеры</span></a>
+        <span class="topbar-note">Управление отношениями</span>
+      </header>
+      <main id="partnerEditWindow">
+        <div class="page-heading">
+          <div><p class="eyebrow" id="editMode">Добавление</p><h1 id="editTitle">Карточка партнера [Добавление]</h1></div>
+          <button class="button button-secondary" id="backButton" type="button"><span class="button-icon" aria-hidden="true">←</span>Назад</button>
+        </div>
+        <p class="form-context" id="formContext"></p>
+        <p class="notice notice-error" id="loadError" role="alert" hidden></p>
+        <form id="partnerForm" class="partner-form">
+          <section class="form-section" aria-labelledby="companySectionTitle">
+            <div class="form-section-heading"><span class="section-number">01</span><div><h2 id="companySectionTitle">О компании</h2><p>Основные сведения партнера</p></div></div>
+            <div class="field-grid">
+              <label class="field field-wide" for="companyName"><span>Наименование <span class="required-mark">*</span></span><input id="companyName" name="company_name" type="text" maxlength="255" autocomplete="organization" required /></label>
+              <label class="field" for="inn"><span>ИНН <span class="required-mark">*</span></span><input id="inn" name="inn" type="text" inputmode="numeric" pattern="([0-9]{10}|[0-9]{12})" minlength="10" maxlength="12" placeholder="10 или 12 цифр" title="ИНН должен содержать 10 или 12 цифр" required /><small>10 цифр для организации или 12 для ИП</small></label>
+              <label class="field" for="partnerType"><span>Тип партнера <span class="required-mark">*</span></span><select id="partnerType" name="partner_type" required><option value="" disabled selected>Выберите тип</option><option value="ООО">ООО</option><option value="АО">АО</option><option value="ЗАО">ЗАО</option><option value="ИП">ИП</option><option value="ПАО">ПАО</option></select></label>
+              <label class="field" for="rating"><span>Рейтинг <span class="required-mark">*</span></span><input id="rating" name="rating" type="number" min="0" max="5" step="1" inputmode="numeric" required /><small>Целое число от 0 до 5</small></label>
+              <label class="field field-wide" for="address"><span>Адрес</span><input id="address" name="address" type="text" maxlength="500" autocomplete="street-address" /></label>
+            </div>
+          </section>
+          <section class="form-section" aria-labelledby="contactSectionTitle">
+            <div class="form-section-heading"><span class="section-number">02</span><div><h2 id="contactSectionTitle">Контакты</h2><p>Данные для связи и ответственный представитель</p></div></div>
+            <div class="field-grid">
+              <label class="field field-wide" for="director"><span>ФИО директора</span><input id="director" name="director" type="text" maxlength="255" autocomplete="name" /></label>
+              <label class="field" for="phone"><span>Телефон</span><input id="phone" name="phone" type="tel" maxlength="20" autocomplete="tel" placeholder="+7 (999) 123-45-67" title="Например: +7 (999) 123-45-67" /><small>Формат: +7 (999) 123-45-67</small></label>
+              <label class="field" for="email"><span>Email компании <span class="required-mark">*</span></span><input id="email" name="email" type="email" maxlength="255" autocomplete="email" placeholder="name@company.ru" title="Например: name@company.ru" required /><small>Например: name@company.ru</small></label>
+            </div>
+          </section>
+          <p class="notice notice-error" id="saveError" role="alert" hidden></p>
+          <div class="form-actions"><button class="button button-secondary" id="cancelButton" type="button">Отмена</button><button class="button button-primary" type="submit"><span class="button-icon" aria-hidden="true">✓</span>Сохранить</button></div>
+        </form>
+      </main>
+      <footer class="app-footer"><span>Партнерская сеть</span><span>CRM · 2026</span></footer>
+    </div>
+    <script type="module" src="partner-edit-app.js"></script>
+  </body>
+</html>
