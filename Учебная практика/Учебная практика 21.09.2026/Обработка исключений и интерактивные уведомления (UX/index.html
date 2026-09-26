@@ -11,10 +11,7 @@
   <body>
     <div class="app-shell">
       <header class="topbar">
-        <a class="brand" href="index.html" aria-label="CRM, реестр партнеров">
-          <img src="assets/favicon.svg" alt="" width="36" height="36" />
-          <span>CRM <span class="brand-divider">/</span> Партнеры</span>
-        </a>
+        <a class="brand" href="index.html" aria-label="CRM, реестр партнеров"><img src="assets/favicon.svg" alt="" width="36" height="36" /><span>CRM <span class="brand-divider">/</span> Партнеры</span></a>
         <span class="topbar-note">Партнеры по продажам</span>
       </header>
       <main id="mainWindow" aria-labelledby="mainTitle">
@@ -27,6 +24,13 @@
       </main>
       <footer class="app-footer"><span>Партнерская сеть</span><span>CRM · 2026</span></footer>
     </div>
+    <dialog class="message-dialog" id="messageDialog" aria-labelledby="dialogTitle" aria-describedby="dialogMessage">
+      <div class="dialog-content">
+        <span class="dialog-icon" id="dialogIcon" aria-hidden="true"></span>
+        <div class="dialog-copy"><h2 id="dialogTitle"></h2><p id="dialogMessage"></p></div>
+      </div>
+      <div class="dialog-actions" id="dialogActions"></div>
+    </dialog>
     <script type="module" src="app.js"></script>
   </body>
 </html>

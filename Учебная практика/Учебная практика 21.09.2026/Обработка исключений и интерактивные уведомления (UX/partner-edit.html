@@ -11,7 +11,7 @@
   <body>
     <div class="app-shell">
       <header class="topbar">
-        <a class="brand" href="index.html" aria-label="CRM, реестр партнеров"><img src="assets/favicon.svg" alt="" width="36" height="36" /><span>CRM <span class="brand-divider">/</span> Партнеры</span></a>
+        <a class="brand" href="index.html" id="homeLink" aria-label="CRM, реестр партнеров"><img src="assets/favicon.svg" alt="" width="36" height="36" /><span>CRM <span class="brand-divider">/</span> Партнеры</span></a>
         <span class="topbar-note">Партнеры по продажам</span>
       </header>
       <main id="partnerEditWindow">
@@ -20,8 +20,7 @@
           <button class="button button-secondary" id="backButton" type="button"><span class="button-icon" aria-hidden="true">←</span>Назад</button>
         </div>
         <p class="form-context" id="formContext"></p>
-        <p class="notice notice-error" id="loadError" role="alert" hidden></p>
-        <form id="partnerForm" class="partner-form">
+        <form id="partnerForm" class="partner-form" novalidate>
           <section class="form-section" aria-labelledby="companySectionTitle">
             <div class="form-section-heading"><span class="section-number">01</span><div><h2 id="companySectionTitle">О компании</h2><p>Основные сведения партнера</p></div></div>
             <div class="field-grid">
@@ -40,12 +39,15 @@
               <label class="field" for="email"><span>Email компании <span class="required-mark">*</span></span><input id="email" name="email" type="email" maxlength="255" autocomplete="email" placeholder="name@company.ru" title="Например: name@company.ru" required /><small>Например: name@company.ru</small></label>
             </div>
           </section>
-          <p class="notice notice-error" id="saveError" role="alert" hidden></p>
-          <div class="form-actions"><button class="button button-secondary" id="cancelButton" type="button">Отмена</button><button class="button button-primary" type="submit"><span class="button-icon" aria-hidden="true">✓</span>Сохранить</button></div>
+          <div class="form-actions"><button class="button button-secondary" id="cancelButton" type="button">Отмена</button><button class="button button-primary" id="saveButton" type="submit"><span class="button-icon" aria-hidden="true">✓</span>Сохранить</button></div>
         </form>
       </main>
       <footer class="app-footer"><span>Партнерская сеть</span><span>CRM · 2026</span></footer>
     </div>
+    <dialog class="message-dialog" id="messageDialog" aria-labelledby="dialogTitle" aria-describedby="dialogMessage">
+      <div class="dialog-content"><span class="dialog-icon" id="dialogIcon" aria-hidden="true"></span><div class="dialog-copy"><h2 id="dialogTitle"></h2><p id="dialogMessage"></p></div></div>
+      <div class="dialog-actions" id="dialogActions"></div>
+    </dialog>
     <script type="module" src="partner-edit-app.js"></script>
   </body>
 </html>
