@@ -37,6 +37,10 @@ from discount_service import calculate_partner_discount
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(levelname)s %(message)s',
+    handlers=[
+        logging.FileHandler(ROOT_DIR / 'app.log', encoding='utf-8'),
+        logging.StreamHandler(),
+    ],
 )
 
 PARTNER_FIELDS = (
