@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#e7e8e4" />
+    <title>CRM: Расчет расхода материала</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="index.html" aria-label="CRM, расчеты производства">
+          <img src="assets/favicon.svg" alt="" width="36" height="36" />
+          <span>CRM <span class="brand-divider">/</span> Производство</span>
+        </a>
+        <span class="topbar-note">Калькулятор материала</span>
+      </header>
+      <main>
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Расчет сырья</p>
+            <h1>Расход материала</h1>
+          </div>
+        </div>
+        <div class="calculator-layout">
+          <form id="calculatorForm" class="calculator-form">
+            <div class="field-grid">
+              <label class="field" for="productTypeId">
+                <span>Тип продукции</span>
+                <select id="productTypeId" name="product_type_id" required disabled>
+                  <option value="">Загрузка справочника...</option>
+                </select>
+                <small id="productCoefficientHint"></small>
+              </label>
+              <label class="field" for="materialTypeId">
+                <span>Тип материала</span>
+                <select id="materialTypeId" name="material_type_id" required disabled>
+                  <option value="">Загрузка справочника...</option>
+                </select>
+                <small id="materialScrapHint"></small>
+              </label>
+              <label class="field" for="quantity">
+                <span>Количество продукции, шт.</span>
+                <input id="quantity" name="quantity" type="number" min="1" step="1" inputmode="numeric" placeholder="Например, 120" required />
+              </label>
+              <label class="field" for="param1">
+                <span>Параметр 1</span>
+                <input id="param1" name="param_1" type="number" min="0.000001" step="any" inputmode="decimal" placeholder="Например, 2.5" required />
+              </label>
+              <label class="field" for="param2">
+                <span>Параметр 2</span>
+                <input id="param2" name="param_2" type="number" min="0.000001" step="any" inputmode="decimal" placeholder="Например, 1.2" required />
+              </label>
+            </div>
+            <button id="calculateButton" class="button button-primary" type="submit" disabled>
+              <span class="button-icon" aria-hidden="true">∑</span>
+              Рассчитать
+            </button>
+          </form>
+
+          <section id="resultPanel" class="result-panel" aria-live="polite" aria-atomic="true" data-state="idle">
+            <p class="result-label">Итоговый расход</p>
+            <p id="resultValue" class="result-value">—</p>
+            <p id="resultMessage" class="result-message">Введите параметры расчета.</p>
+          </section>
+        </div>
+      </main>
+      <footer class="app-footer"><span>Расчеты производства</span><span>CRM · 2026</span></footer>
+    </div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
