@@ -18,7 +18,13 @@
           <label class="field">Количество продукции<input name="quantity" type="number" step="1" inputmode="numeric" placeholder="Например, 100" required /></label>
           <label class="field">Параметр 1<input name="param_1" type="number" step="any" inputmode="decimal" placeholder="Положительное число" required /></label>
           <label class="field">Параметр 2<input name="param_2" type="number" step="any" inputmode="decimal" placeholder="Положительное число" required /></label>
-        </div><button id="calculateButton" class="button button-primary" type="submit" disabled>∑ Рассчитать</button></form>
+        </div>
+        <div class="calculator-actions">
+          <button id="calculateButton" class="button button-primary" type="submit" disabled>
+            ∑ Рассчитать
+          </button>
+        </div>
+        </form>
         <section id="resultPanel" class="result-panel" data-state="idle" aria-live="polite"><small>Итоговый расход</small><p id="resultValue">—</p><p id="resultMessage">Введите параметры расчета.</p></section></div>
       </main>
       <footer class="app-footer"><span>Расчеты производства</span><span>CRM · 2026</span></footer>

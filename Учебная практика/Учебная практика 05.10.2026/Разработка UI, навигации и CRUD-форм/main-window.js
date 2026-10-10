@@ -30,6 +30,8 @@ export class MainWindow {
   async load() {
     this.count.textContent = 'Загрузка...';
     this.list.replaceChildren();
+    this.selectedPartnerId = null;
+    this.historyButton.disabled = true;
     try {
       const response = await fetch('/api/partners', { cache: 'no-store' });
       const result = await response.json();
@@ -42,7 +44,7 @@ export class MainWindow {
     }
     if (new URLSearchParams(location.search).get('saved') === '1') {
       await this.notifications.alert('information', 'Изменения сохранены', 'Данные партнера записаны в базу, список обновлен.');
-      history.replaceState({}, '', location.pathname);
+      history.replaceState({}, '', `index.html?selected=${encodeURIComponent(this.selectedPartnerId ?? '')}`);
     }
   }
 
@@ -54,6 +56,15 @@ export class MainWindow {
       return;
     }
     partners.forEach((partner) => this.list.append(this.createRow(partner)));
+    const selected = Number(new URLSearchParams(location.search).get('selected'));
+    const radio = [...this.list.querySelectorAll('input[name="selectedPartner"]')]
+      .find((item) => Number(item.value) === selected);
+    if (radio && selected > 0) {
+      radio.checked = true;
+      this.selectedPartnerId = selected;
+      this.historyButton.disabled = false;
+      radio.closest('.partner-row').classList.add('is-selected');
+    }
   }
 
   createRow(partner) {

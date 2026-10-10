@@ -8,6 +8,7 @@ from decimal import Decimal, InvalidOperation
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlparse
+from psycopg2 import errorcodes
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -181,6 +182,32 @@ def read_json(handler):
         raise ValueError('Тело запроса должно содержать корректный JSON.') from error
 
 
+# Only these public UI assets can be served. Unknown paths must never fall back
+# to SimpleHTTPRequestHandler's directory traversal / file listing behavior.
+PUBLIC_ASSETS = frozenset({
+    'index.html', 'partner-edit.html', 'history.html', 'calculator.html',
+    'styles.css', 'app.js', 'main-window.js', 'partner-edit-app.js',
+    'partner-edit-window.js', 'history-app.js', 'partner-history-window.js',
+    'calculator-app.js', 'notifications.js', 'logo.svg', 'favicon.svg',
+})
+
+
+def is_public_asset(request_path):
+    path = urlparse(request_path).path
+    if path == '/':
+        return True
+    # Reject percent-encoded separators, traversal, dotfiles and subdirectories.
+    if '%' in path or not path.startswith('/') or path.count('/') != 1:
+        return False
+    return path[1:] in PUBLIC_ASSETS
+
+
+def integrity_error_message(error):
+    if getattr(error, 'pgcode', None) == errorcodes.UNIQUE_VIOLATION:
+        return 409, 'ИНН или email уже используется.'
+    return 400, 'Данные нарушают ограничения базы. Проверьте поля партнера.'
+
+
 class AppHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT_DIR), **kwargs)
@@ -210,8 +237,21 @@ class AppHandler(SimpleHTTPRequestHandler):
         if path == '/api/material/catalogs':
             return self.run_api(material_catalogs.list_catalogs)
 
-        self.path = path
+        if not is_public_asset(self.path):
+            return self.send_error(404, 'Not Found')
+        self.path = '/index.html' if path == '/' else path
         return super().do_GET()
+
+    def do_HEAD(self):
+        if not is_public_asset(self.path):
+            return self.send_error(404, 'Not Found')
+        path = urlparse(self.path).path
+        self.path = '/index.html' if path == '/' else path
+        return super().do_HEAD()
+
+    def list_directory(self, path):
+        self.send_error(404, 'Not Found')
+        return None
 
     def do_POST(self):
         if self.path == '/api/material/calculate':
@@ -245,9 +285,10 @@ class AppHandler(SimpleHTTPRequestHandler):
             return self.send_json(201, {'id': partner_id})
         except ValueError as error:
             return self.send_json(400, {'error': str(error)})
-        except psycopg2.IntegrityError:
+        except psycopg2.IntegrityError as error:
             logging.exception('Нарушение ограничения при создании партнера')
-            return self.send_json(409, {'error': 'ИНН или email уже используется.'})
+            status, message = integrity_error_message(error)
+            return self.send_json(status, {'error': message})
         except Exception:
             logging.exception('Ошибка создания партнера')
             return self.send_json(500, {'error': 'Не удалось сохранить партнера. Проверьте подключение к БД.'})
@@ -263,9 +304,10 @@ class AppHandler(SimpleHTTPRequestHandler):
             return self.send_json(200, {'id': partner_id})
         except ValueError as error:
             return self.send_json(400, {'error': str(error)})
-        except psycopg2.IntegrityError:
+        except psycopg2.IntegrityError as error:
             logging.exception('Нарушение ограничения при обновлении партнера')
-            return self.send_json(409, {'error': 'ИНН или email уже используется.'})
+            status, message = integrity_error_message(error)
+            return self.send_json(status, {'error': message})
         except Exception:
             logging.exception('Ошибка обновления партнера')
             return self.send_json(500, {'error': 'Не удалось обновить партнера. Проверьте подключение к БД.'})

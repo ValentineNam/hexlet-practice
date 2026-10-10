@@ -9,6 +9,8 @@ export class PartnerEditWindow {
     this.initialSnapshot = '';
     this.busy = false;
     this.promptOpen = false;
+    this.loaded = false;
+    this.saveButton.disabled = true;
   }
 
   start() {
@@ -32,6 +34,8 @@ export class PartnerEditWindow {
 
     if (!editing) {
       this.snapshot();
+      this.loaded = true;
+      this.saveButton.disabled = false;
       return;
     }
     if (!Number.isInteger(this.partnerId) || this.partnerId <= 0) {
@@ -51,6 +55,8 @@ export class PartnerEditWindow {
       }
       this.root.querySelector('#formContext').textContent = `Партнер ID ${partner.id}`;
       this.snapshot();
+      this.loaded = true;
+      this.saveButton.disabled = false;
     } catch (error) {
       await this.notifications.alert('error', 'Не удалось загрузить карточку', `${error.message}\n\nПроверьте настройки PostgreSQL и повторите попытку.`);
       location.href = 'index.html';
@@ -82,7 +88,7 @@ export class PartnerEditWindow {
   async requestLeave() {
     if (this.promptOpen) return;
     if (!this.hasChanges()) {
-      location.href = 'index.html';
+      location.href = this.backUrl();
       return;
     }
     this.promptOpen = true;
@@ -93,8 +99,14 @@ export class PartnerEditWindow {
     this.promptOpen = false;
     if (leave) {
       this.busy = true;
-      location.href = 'index.html';
+      location.href = this.backUrl();
     }
+  }
+
+  backUrl() {
+    return this.mode === 'edit' && this.partnerId > 0
+      ? `index.html?selected=${encodeURIComponent(this.partnerId)}`
+      : 'index.html';
   }
 
   validate() {
@@ -102,7 +114,9 @@ export class PartnerEditWindow {
     const inn = this.form.elements.inn;
     const email = this.form.elements.email;
     const rating = this.form.elements.rating;
+    const type = this.form.elements.partner_type;
     if (!companyName.value.trim()) return [companyName, 'Введите наименование партнера.'];
+    if (!['ООО', 'АО', 'ЗАО', 'ПАО', 'ИП'].includes(type.value)) return [type, 'Выберите тип партнера.'];
     if (!/^\d{10}$|^\d{12}$/.test(inn.value.trim())) return [inn, 'ИНН должен содержать 10 или 12 цифр.'];
     if (!email.value.trim() || !email.validity.valid) return [email, 'Введите корректный email.'];
     if (!/^\d+$/.test(rating.value) || Number(rating.value) < 0 || Number(rating.value) > 2147483647) {
@@ -113,7 +127,7 @@ export class PartnerEditWindow {
 
   async save(event) {
     event.preventDefault();
-    if (this.busy) return;
+    if (this.busy || !this.loaded) return;
     const validationError = this.validate();
     if (validationError) {
       await this.notifications.alert('error', 'Проверьте данные', validationError[1]);
@@ -135,7 +149,7 @@ export class PartnerEditWindow {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
-      location.href = 'index.html?saved=1';
+      location.href = `index.html?saved=1&selected=${encodeURIComponent(result.id)}`;
       return;
     } catch (error) {
       this.busy = false;

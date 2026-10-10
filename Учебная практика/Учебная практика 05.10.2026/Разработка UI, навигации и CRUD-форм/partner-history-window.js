@@ -5,6 +5,11 @@ export class PartnerHistoryWindow {
     this.title = root.querySelector('#historyTitle');
     this.message = root.querySelector('#historyMessage');
     this.table = root.querySelector('#historyTableWrap');
+    for (const link of document.querySelectorAll('.back-to-register')) {
+      if (this.partnerId > 0 && Number.isInteger(this.partnerId)) {
+        link.href = `index.html?selected=${encodeURIComponent(this.partnerId)}`;
+      }
+    }
   }
 
   async open() {

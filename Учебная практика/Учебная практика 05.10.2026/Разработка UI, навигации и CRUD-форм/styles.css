@@ -194,6 +194,15 @@ h2, p { margin-top: 0; }
 
 .calculator-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr); gap: 55px; max-width: 980px; border-top: 1px solid var(--ink); }
 .calculator-form { padding: 26px 0 45px; }
+.calculator-form .field-grid {
+  padding-left: 0;
+}
+.calculator-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 28px;
+}
+
 .result-panel { align-self: start; min-height: 230px; margin-top: 26px; padding: 21px; border-top: 3px solid var(--line); background: var(--surface-muted); }
 .result-panel[data-state=success] { border-color: var(--green); }
 .result-panel[data-state=error] { border-color: var(--rust); }
