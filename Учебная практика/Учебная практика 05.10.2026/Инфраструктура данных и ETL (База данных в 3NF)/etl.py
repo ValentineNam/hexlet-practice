@@ -216,7 +216,7 @@ TABLE_COLUMNS = {
 def load_demo_catalogs():
     module_path = (
         ROOT_DIR.parent / 'Реализация ядра бизнес-логики (Расчеты и алгоритмы)'
-        / 'material_calculator.py'
+        / 'demo_catalogs.py'
     )
     spec = importlib.util.spec_from_file_location('etl_demo_materials', module_path)
     module = importlib.util.module_from_spec(spec)

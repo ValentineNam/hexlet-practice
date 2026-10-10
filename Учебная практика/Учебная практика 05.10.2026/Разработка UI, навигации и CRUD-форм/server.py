@@ -4,12 +4,12 @@ import logging
 import os
 import re
 import sys
+from decimal import Decimal, InvalidOperation
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
 import psycopg2
-from dotenv import load_dotenv
 from psycopg2.extras import RealDictCursor
 
 ROOT_DIR = Path(__file__).resolve().parent
@@ -17,30 +17,6 @@ PRACTICE_ROOT = ROOT_DIR.parent.parent
 OCTOBER_TASKS = PRACTICE_ROOT / 'Учебная практика 05.10.2026'
 ETL_DIR = OCTOBER_TASKS / 'Инфраструктура данных и ETL (База данных в 3NF)'
 LOGIC_DIR = OCTOBER_TASKS / 'Реализация ядра бизнес-логики (Расчеты и алгоритмы)'
-PREVIOUS_BACKEND = (
-    PRACTICE_ROOT
-    / 'Учебная практика 21.09.2026'
-    / 'Интеграция формы с БД (CRUD-операции и обновление UI)'
-)
-PREVIOUS_PRACTICE = next(
-    (path for path in PRACTICE_ROOT.iterdir() if path.is_dir() and '14.09.2026' in path.name),
-    None,
-)
-SEPTEMBER_BACKEND = next(
-    (
-        path
-        for path in PREVIOUS_PRACTICE.iterdir()
-        if path.is_dir() and 'Интеграция с БД' in path.name
-    ),
-    None,
-) if PREVIOUS_PRACTICE is not None else None
-
-load_dotenv(ETL_DIR / '.env')
-load_dotenv(PREVIOUS_BACKEND / '.env', override=False)
-if SEPTEMBER_BACKEND is not None:
-    load_dotenv(SEPTEMBER_BACKEND / '.env', override=False)
-
-
 def load_module(module_name, module_path):
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     module = importlib.util.module_from_spec(spec)
@@ -49,8 +25,11 @@ def load_module(module_name, module_path):
     return module
 
 
-discount_module = load_module('october_discount', LOGIC_DIR / 'discount.py')
-material_module = load_module('october_material_calculator', LOGIC_DIR / 'material_calculator.py')
+sys.path.insert(0, str(LOGIC_DIR))
+import discount as discount_module
+import material_calculator as material_module
+import material_catalogs
+from database import get_db_connection
 
 logging.basicConfig(
     level=logging.INFO,
@@ -65,22 +44,6 @@ validation_module = load_module('october_validation', ETL_DIR / 'validation.py')
 PARTNER_TYPES = validation_module.PARTNER_TYPES
 PARTNER_FIELDS = validation_module.PARTNER_FIELDS
 validate_partner = validation_module.validate_partner
-
-def get_db_connection():
-    schema_name = os.environ.get('DB_SCHEMA', 'practice_2026_10_05')
-    if not re.fullmatch(r'[a-z_][a-z0-9_]*', schema_name):
-        raise ValueError('DB_SCHEMA must be a lowercase SQL identifier.')
-
-    return psycopg2.connect(
-        host=os.environ.get('DB_HOST', 'localhost'),
-        port=os.environ.get('DB_PORT', '5432'),
-        dbname=os.environ.get('DB_NAME', 'practice_2026_autumn'),
-        user=os.environ.get('DB_USER', 'postgres'),
-        password=os.environ.get('DB_PASSWORD', ''),
-        connect_timeout=5,
-        options=f'-c search_path={schema_name}',
-    )
-
 
 def build_logo(company_name, partner_id):
     letter = next((character for character in company_name if character.isalpha()), 'П').upper()
@@ -213,7 +176,7 @@ def save_partner(partner_id, payload):
 def read_json(handler):
     try:
         length = int(handler.headers.get('Content-Length', '0'))
-        return json.loads(handler.rfile.read(length))
+        return json.loads(handler.rfile.read(length), parse_float=Decimal)
     except (ValueError, json.JSONDecodeError) as error:
         raise ValueError('Тело запроса должно содержать корректный JSON.') from error
 
@@ -245,16 +208,7 @@ class AppHandler(SimpleHTTPRequestHandler):
             return self.run_api(lambda: get_partner(int(partner_match.group(1))), True)
 
         if path == '/api/material/catalogs':
-            return self.send_json(200, {
-                'product_types': [
-                    {'id': key, 'coefficient': str(value)}
-                    for key, value in material_module.PRODUCT_TYPE_COEFFICIENTS.items()
-                ],
-                'material_types': [
-                    {'id': key, 'scrap_percentage': str(value)}
-                    for key, value in material_module.MATERIAL_SCRAP_PERCENTAGES.items()
-                ],
-            })
+            return self.run_api(material_catalogs.list_catalogs)
 
         self.path = path
         return super().do_GET()
@@ -266,8 +220,17 @@ class AppHandler(SimpleHTTPRequestHandler):
                 required = ('product_type_id', 'material_type_id', 'quantity', 'param_1', 'param_2')
                 if not isinstance(payload, dict) or any(field not in payload for field in required):
                     raise ValueError('Передайте все пять параметров расчета.')
+                for field in ('param_1', 'param_2'):
+                    if isinstance(payload[field], str):
+                        try:
+                            payload[field] = Decimal(payload[field])
+                        except InvalidOperation:
+                            return self.send_json(200, {'material_requirement': -1})
                 result = material_module.calculate_material_requirement(*(payload[field] for field in required))
                 return self.send_json(200, {'material_requirement': result})
+            except material_catalogs.CatalogUnavailableError as error:
+                logging.exception('Ошибка справочников')
+                return self.send_json(503, {'error': str(error)})
             except ValueError as error:
                 return self.send_json(400, {'error': str(error)})
             except Exception:
@@ -313,6 +276,9 @@ class AppHandler(SimpleHTTPRequestHandler):
             if not_found and result is None:
                 return self.send_json(404, {'error': 'Партнер не найден.'})
             return self.send_json(200, result)
+        except material_catalogs.CatalogUnavailableError as error:
+            logging.exception('Ошибка справочников')
+            return self.send_json(503, {'error': str(error)})
         except Exception:
             logging.exception('Ошибка чтения данных приложения')
             return self.send_json(500, {'error': 'Не удалось загрузить данные. Проверьте базу данных.'})

@@ -1,19 +1,6 @@
-from decimal import Decimal, InvalidOperation, ROUND_CEILING
-from math import isfinite
+from decimal import Decimal, DecimalException, ROUND_CEILING, localcontext
 
-
-# Демонстрационные справочники используются вместо отсутствующих таблиц БД.
-PRODUCT_TYPE_COEFFICIENTS = {
-    1: Decimal('1.20'),
-    2: Decimal('1.50'),
-    3: Decimal('0.85'),
-}
-
-MATERIAL_SCRAP_PERCENTAGES = {
-    1: Decimal('2.5'),
-    2: Decimal('5'),
-    3: Decimal('1.75'),
-}
+from material_catalogs import get_coefficients
 
 
 def calculate_material_requirement(
@@ -23,42 +10,34 @@ def calculate_material_requirement(
     param_1: float,
     param_2: float,
 ) -> int:
-    """Return the required material units, rounded up, or -1 for invalid input."""
-    if type(product_type_id) is not int or type(material_type_id) is not int:
+    """Некорректные данные -> -1; сбой БД -> CatalogUnavailableError."""
+    if any(type(value) is not int or not 0 < value <= 2147483647
+           for value in (product_type_id, material_type_id)):
         return -1
     if type(quantity) is not int or quantity <= 0:
         return -1
-    if not _is_positive_finite_number(param_1):
-        return -1
-    if not _is_positive_finite_number(param_2):
-        return -1
+    parameters = []
+    for value in (param_1, param_2):
+        if isinstance(value, bool) or not isinstance(value, (int, float, Decimal)):
+            return -1
+        try:
+            number = Decimal(str(value))
+            if not number.is_finite() or number <= 0:
+                return -1
+            parameters.append(number)
+        except (DecimalException, ValueError):
+            return -1
 
-    product_coefficient = PRODUCT_TYPE_COEFFICIENTS.get(product_type_id)
-    scrap_percentage = MATERIAL_SCRAP_PERCENTAGES.get(material_type_id)
-    if product_coefficient is None or scrap_percentage is None:
+    coefficients = get_coefficients(product_type_id, material_type_id)
+    if coefficients is None:
         return -1
-
+    coefficient, defect_percent = coefficients
     try:
-        first_parameter = Decimal(str(param_1))
-        second_parameter = Decimal(str(param_2))
-        scrap_multiplier = Decimal('1') + scrap_percentage / Decimal('100')
-        material_amount = (
-            first_parameter
-            * second_parameter
-            * product_coefficient
-            * quantity
-            * scrap_multiplier
-        )
-        return int(material_amount.to_integral_value(rounding=ROUND_CEILING))
-    except (InvalidOperation, OverflowError, ValueError):
+        numbers = [*parameters, Decimal(quantity), coefficient, defect_percent]
+        # Запас точности сохраняет дробный хвост до ceil даже за пределами 28 цифр.
+        with localcontext() as context:
+            context.prec = sum(len(n.as_tuple().digits) + abs(n.as_tuple().exponent) for n in numbers) + 10
+            amount = parameters[0] * parameters[1] * quantity * coefficient * (1 + defect_percent / 100)
+            return int(amount.to_integral_value(rounding=ROUND_CEILING))
+    except (DecimalException, OverflowError, ValueError):
         return -1
-
-
-def _is_positive_finite_number(value: object) -> bool:
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        return False
-
-    try:
-        return isfinite(value) and value > 0
-    except (OverflowError, TypeError, ValueError):
-        return False

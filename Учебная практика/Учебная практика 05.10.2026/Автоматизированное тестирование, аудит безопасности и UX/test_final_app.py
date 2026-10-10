@@ -1,3 +1,4 @@
+from decimal import Decimal
 import logging
 import sys
 import unittest
@@ -26,7 +27,8 @@ class FinalBusinessLogicTests(unittest.TestCase):
             with self.subTest(quantity=quantity):
                 self.assertEqual(server.discount_module.calculate_partner_discount(quantity), expected)
 
-    def test_material_calculation_and_invalid_ids(self):
+    @patch.object(server.material_module, 'get_coefficients', side_effect=[(Decimal('1.2'), Decimal('5')), None])
+    def test_material_calculation_and_invalid_ids(self, coefficients):
         self.assertEqual(server.material_module.calculate_material_requirement(1, 2, 100, 1.0, 1.0), 126)
         self.assertEqual(server.material_module.calculate_material_requirement(999, 2, 100, 1.0, 1.0), -1)
 

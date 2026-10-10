@@ -25,7 +25,8 @@ class FinalApplicationBackendTests(unittest.TestCase):
         self.assertEqual(server.discount_module.calculate_partner_discount(50000), 10)
         self.assertEqual(server.discount_module.calculate_partner_discount(300000), 15)
 
-    def test_material_error_sentinel_is_preserved(self):
+    @patch.object(server.material_module, 'get_coefficients', return_value=None)
+    def test_material_error_sentinel_is_preserved(self, coefficients):
         self.assertEqual(
             server.material_module.calculate_material_requirement(999, 1, 10, 1.0, 1.0),
             -1,

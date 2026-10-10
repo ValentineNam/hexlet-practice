@@ -40,7 +40,9 @@ form.addEventListener('submit', async (event) => {
   if (!form.reportValidity()) return;
 
   const payload = Object.fromEntries(new FormData(form).entries());
-  for (const key of Object.keys(payload)) payload[key] = Number(payload[key]);
+  for (const key of ['product_type_id', 'material_type_id', 'quantity']) {
+    payload[key] = Number(payload[key]);
+  }
   button.disabled = true;
 
   try {
