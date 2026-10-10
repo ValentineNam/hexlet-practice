@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRM: История реализации продукции</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar"><a class="brand" href="index.html"><img src="favicon.svg" alt="" width="36" height="36" /><span>CRM <i>/</i> Партнеры</span></a><span class="topbar-note">Партнеры по продажам</span></header>
+      <main>
+        <div class="page-heading"><div><p class="eyebrow">История продаж</p><h1 id="historyTitle">История реализации продукции</h1></div><a class="button button-secondary" href="index.html">← К реестру</a></div>
+        <section class="history-partner" id="partnerSummary" hidden><span class="history-mark" id="partnerMark"></span><div><small>Партнер</small><h2 id="partnerName"></h2></div><span id="historyCount" class="history-count"></span></section>
+        <p id="historyMessage" class="empty-state" role="status">Загрузка истории...</p>
+        <div id="historyTableWrap" class="history-table-wrap" hidden><table class="history-table"><thead><tr><th>Наименование продукции</th><th>Количество (шт.)</th><th>Дата продажи</th></tr></thead><tbody id="historyRows"></tbody></table></div>
+      </main>
+      <footer class="app-footer"><span>Партнерская сеть</span><span>CRM · 2026</span></footer>
+    </div>
+    <script type="module" src="history-app.js"></script>
+  </body>
+</html>

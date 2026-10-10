@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRM: Расчет расхода материала</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar"><a class="brand" href="index.html"><img src="favicon.svg" alt="" width="36" height="36" /><span>CRM <i>/</i> Производство</span></a><span class="topbar-note">Расчет сырья</span></header>
+      <main>
+        <div class="page-heading"><div><p class="eyebrow">Бизнес-логика</p><h1>Расход материала</h1></div><a class="button button-secondary" href="index.html">← К реестру</a></div>
+        <div class="calculator-layout"><form id="calculatorForm" class="calculator-form"><div class="field-grid">
+          <label class="field">Тип продукции<select name="product_type_id" required disabled><option value="">Загрузка...</option></select></label>
+          <label class="field">Тип материала<select name="material_type_id" required disabled><option value="">Загрузка...</option></select></label>
+          <label class="field">Количество продукции<input name="quantity" type="number" step="1" inputmode="numeric" placeholder="Например, 100" required /></label>
+          <label class="field">Параметр 1<input name="param_1" type="number" step="any" inputmode="decimal" placeholder="Положительное число" required /></label>
+          <label class="field">Параметр 2<input name="param_2" type="number" step="any" inputmode="decimal" placeholder="Положительное число" required /></label>
+        </div><button id="calculateButton" class="button button-primary" type="submit" disabled>∑ Рассчитать</button></form>
+        <section id="resultPanel" class="result-panel" data-state="idle" aria-live="polite"><small>Итоговый расход</small><p id="resultValue">—</p><p id="resultMessage">Введите параметры расчета.</p></section></div>
+      </main>
+      <footer class="app-footer"><span>Расчеты производства</span><span>CRM · 2026</span></footer>
+    </div>
+    <script type="module" src="calculator-app.js"></script>
+  </body>
+</html>

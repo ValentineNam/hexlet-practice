@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRM: Реестр партнеров</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar"><a class="brand" href="index.html"><img src="favicon.svg" alt="Иконка CRM" width="36" height="36" /><span>CRM <i>/</i> Партнеры</span><img class="company-logo" src="logo.svg" alt="Логотип компании" /></a><span class="topbar-note">Партнеры по продажам</span></header>
+      <main id="mainWindow">
+        <div class="page-heading"><div><p class="eyebrow">Главная</p><h1>Реестр партнеров</h1></div><div class="heading-actions"><a class="button button-secondary" href="calculator.html">Расход материала</a><button class="button button-primary" id="addPartnerButton" type="button">+ Добавить партнера</button></div></div>
+        <div class="list-toolbar"><strong id="partnerCount">Загрузка...</strong><span>Выберите партнера, чтобы открыть историю продаж</span></div>
+        <div id="partnersList" class="partners-list" aria-label="Список партнеров"></div>
+        <div class="list-actions"><button class="button button-primary" id="historyButton" type="button" disabled>История продаж →</button></div>
+      </main>
+      <footer class="app-footer"><span>Партнерская сеть</span><span>CRM · 2026</span></footer>
+    </div>
+    <dialog class="message-dialog" id="messageDialog" aria-labelledby="dialogTitle" aria-describedby="dialogMessage"><div class="dialog-content"><span id="dialogIcon" class="dialog-icon" aria-hidden="true"></span><div><h2 id="dialogTitle"></h2><p id="dialogMessage"></p></div></div><div class="dialog-actions" id="dialogActions"></div></dialog>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
