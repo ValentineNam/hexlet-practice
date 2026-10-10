@@ -1,4 +1,6 @@
+import argparse
 import csv
+import importlib.util
 import os
 import re
 from datetime import datetime
@@ -7,6 +9,9 @@ from pathlib import Path
 
 import psycopg2
 from dotenv import load_dotenv
+from psycopg2 import sql
+
+from validation import MAX_INTEGER, clean_text, validate_partner
 
 ROOT_DIR = Path(__file__).resolve().parent
 RAW_DIR = ROOT_DIR / 'raw'
@@ -36,10 +41,6 @@ LATIN_TO_CYRILLIC_INITIALS = {'A': 'А', 'B': 'В'}
 def read_csv(path, encoding):
     with path.open('r', encoding=encoding, newline='') as source:
         return list(csv.DictReader(source))
-
-
-def clean_text(value):
-    return ' '.join((value or '').strip().split())
 
 
 def clean_partner_name(value):
@@ -77,14 +78,24 @@ def parse_date(value):
     raise ValueError(f'неподдерживаемый формат даты: {cleaned_value!r}')
 
 
-def parse_decimal(value, field_name):
+def parse_positive_integer(value, field_name):
+    number = int(clean_text(value))
+    if not 0 < number <= MAX_INTEGER:
+        raise ValueError(f'{field_name}: ожидается целое от 1 до {MAX_INTEGER}')
+    return number
+
+
+def parse_decimal(value, field_name, maximum=Decimal('9999999999.99')):
     try:
         amount = Decimal(clean_text(value))
+        if not amount.is_finite() or not 0 <= amount <= maximum:
+            raise ValueError(f'{field_name}: сумма вне допустимого диапазона')
+        rounded = amount.quantize(Decimal('0.01'))
+        if rounded != amount:
+            raise ValueError(f'{field_name}: допускается не более двух знаков после запятой')
+        return rounded
     except InvalidOperation as error:
-        raise ValueError(f'поле {field_name} не является числом: {value!r}') from error
-    if not amount.is_finite() or amount < 0:
-        raise ValueError(f'поле {field_name} должно быть конечным числом не меньше 0')
-    return amount.quantize(Decimal('0.01'))
+        raise ValueError(f'{field_name}: некорректная сумма') from error
 
 
 def transform_sources(raw_dir=RAW_DIR):
@@ -100,7 +111,7 @@ def transform_sources(raw_dir=RAW_DIR):
 
     for row_number, row in enumerate(raw_partners, start=2):
         try:
-            partner_id = int(clean_text(row['partner_id']))
+            partner_id = parse_positive_integer(row['partner_id'], 'partner_id')
             full_partner_name = clean_partner_name(row['partner_name'])
             partner_type = detect_partner_type(full_partner_name)
             company_name = remove_partner_type(full_partner_name)
@@ -108,14 +119,14 @@ def transform_sources(raw_dir=RAW_DIR):
             email = clean_text(row['email']).lower()
             if partner_id in partner_ids:
                 raise ValueError(f'повторный partner_id={partner_id}')
-            if not company_name:
-                raise ValueError('пустое наименование партнера')
-            if partner_type is None:
-                raise ValueError(f'не удалось определить тип партнера: {company_name!r}')
-            if not re.fullmatch(r'\d{10,12}', inn):
-                raise ValueError(f'некорректный ИНН: {inn!r}')
-            if not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', email):
-                raise ValueError(f'некорректный email: {email!r}')
+            normalized = validate_partner({
+                'company_name': company_name,
+                'partner_type': partner_type,
+                'inn': inn,
+                'email': email,
+                'rating': 0,
+            })
+            company_name = normalized['company_name']
             if inn in partner_inns:
                 raise ValueError(f'повторный ИНН: {inn}')
             if email in partner_emails:
@@ -129,22 +140,20 @@ def transform_sources(raw_dir=RAW_DIR):
 
     raw_products = read_csv(raw_dir / 'products_raw.csv', 'cp1251')
     product_ids = set()
-    product_prices = {}
 
     for row_number, row in enumerate(raw_products, start=2):
         try:
-            product_id = int(clean_text(row['product_id']))
+            product_id = parse_positive_integer(row['product_id'], 'product_id')
             product_name = clean_text(row['product_name'])
             list_price = parse_decimal(row['price'], 'price')
             if product_id in product_ids:
                 raise ValueError(f'повторный product_id={product_id}')
-            if not product_name:
-                raise ValueError('пустое наименование продукта')
+            if not product_name or len(product_name) > 255:
+                raise ValueError('наименование продукта: от 1 до 255 символов')
             if any(product_name == existing[1] for existing in products):
                 raise ValueError(f'повторное наименование продукта: {product_name}')
             products.append((product_id, product_name, list_price))
             product_ids.add(product_id)
-            product_prices[product_id] = list_price
         except (KeyError, ValueError) as error:
             rejections.append(('products_raw.csv', row_number, str(error)))
 
@@ -153,27 +162,20 @@ def transform_sources(raw_dir=RAW_DIR):
 
     for row_number, row in enumerate(raw_sales, start=2):
         try:
-            sale_id = int(clean_text(row['sale_id']))
-            partner_id = int(clean_text(row['partner_id']))
-            product_id = int(clean_text(row['product_id']))
+            sale_id = parse_positive_integer(row['sale_id'], 'sale_id')
+            partner_id = parse_positive_integer(row['partner_id'], 'partner_id')
+            product_id = parse_positive_integer(row['product_id'], 'product_id')
             sale_date = parse_date(row['sale_date'])
-            quantity = int(clean_text(row['quantity']))
-            amount = parse_decimal(row['amount'], 'amount')
+            quantity = parse_positive_integer(row['quantity'], 'quantity')
+            amount = parse_decimal(row['amount'], 'amount', Decimal('99999999999999999999.99'))
             if sale_id in sale_ids:
                 raise ValueError(f'повторный sale_id={sale_id}')
             if partner_id not in partner_ids:
                 raise ValueError(f'битый внешний ключ partner_id={partner_id}')
-            if product_id not in product_prices:
+            if product_id not in product_ids:
                 raise ValueError(f'битый внешний ключ product_id={product_id}')
-            if quantity <= 0:
-                raise ValueError(f'quantity должен быть больше 0, получено {quantity}')
-            expected_amount = product_prices[product_id] * quantity
-            if amount != expected_amount:
-                raise ValueError(
-                    f'amount={amount} не совпадает с quantity * list_price={expected_amount}'
-                )
-            unit_price = amount / quantity
-            sales.append((sale_id, partner_id, product_id, sale_date, quantity, unit_price))
+            # CSV содержит сумму продажи, а не обязательно текущую прайс-листовую цену.
+            sales.append((sale_id, partner_id, product_id, sale_date, quantity, amount))
             sale_ids.add(sale_id)
         except (KeyError, ValueError) as error:
             rejections.append(('sales_history_raw.csv', row_number, str(error)))
@@ -202,64 +204,113 @@ def get_connection():
     )
 
 
-def run_etl():
-    partners, products, sales, rejections = transform_sources()
-    schema_sql = (ROOT_DIR / 'schema.sql').read_text(encoding='utf-8')
+TABLE_COLUMNS = {
+    'partners': ('partner_id', 'company_name', 'partner_type', 'inn', 'contact_email'),
+    'products': ('product_id', 'product_name', 'list_price'),
+    'sales_history': ('sale_id', 'partner_id', 'product_id', 'sale_date', 'quantity', 'sale_amount'),
+    'product_types': ('product_type_id', 'coefficient', 'data_source'),
+    'material_types': ('material_type_id', 'scrap_percentage', 'data_source'),
+}
 
-    with get_connection() as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(schema_sql)
-            cursor.execute('TRUNCATE sales_history, products, partners')
-            cursor.executemany(
-                '''
-                INSERT INTO partners (partner_id, company_name, partner_type, inn, contact_email)
-                VALUES (%s, %s, %s, %s, %s)
-                ''',
-                partners,
-            )
-            cursor.executemany(
-                '''
-                INSERT INTO products (product_id, product_name, list_price)
-                VALUES (%s, %s, %s)
-                ''',
-                products,
-            )
-            cursor.executemany(
-                '''
-                INSERT INTO sales_history (
-                    sale_id, partner_id, product_id, sale_date, quantity, unit_price_at_sale
+
+def load_demo_catalogs():
+    module_path = (
+        ROOT_DIR.parent / 'Реализация ядра бизнес-логики (Расчеты и алгоритмы)'
+        / 'material_calculator.py'
+    )
+    spec = importlib.util.spec_from_file_location('etl_demo_materials', module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return {
+        'product_types': [(key, value, 'demo') for key, value in module.PRODUCT_TYPE_COEFFICIENTS.items()],
+        'material_types': [(key, value, 'demo') for key, value in module.MATERIAL_SCRAP_PERCENTAGES.items()],
+    }
+
+
+def merge_rows(cursor, table, rows):
+    """Добавляет только отсутствующие строки; конфликт отменяет всю загрузку."""
+    columns = TABLE_COLUMNS[table]
+    fields = sql.SQL(', ').join(map(sql.Identifier, columns))
+    select_query = sql.SQL('SELECT {} FROM {} WHERE {} = %s').format(
+        fields, sql.Identifier(table), sql.Identifier(columns[0]),
+    )
+    insert_query = sql.SQL('INSERT INTO {} ({}) VALUES ({})').format(
+        sql.Identifier(table), fields,
+        sql.SQL(', ').join(sql.Placeholder() for _ in columns),
+    )
+    inserted = 0
+    for row in rows:
+        cursor.execute(select_query, (row[0],))
+        existing = cursor.fetchone()
+        if existing is not None:
+            if tuple(existing) != tuple(row):
+                raise ValueError(
+                    f'Конфликт {table}, ID={row[0]}: существующая запись отличается. '
+                    'Данные не перезаписаны; транзакция отменена.'
                 )
-                VALUES (%s, %s, %s, %s, %s, %s)
-                ''',
-                sales,
-            )
-            cursor.execute('SELECT COUNT(*) FROM partners')
-            partners_count = cursor.fetchone()[0]
-            cursor.execute('SELECT COUNT(*) FROM products')
-            products_count = cursor.fetchone()[0]
-            cursor.execute('SELECT COUNT(*) FROM sales_history')
-            sales_count = cursor.fetchone()[0]
-            cursor.execute(
-                '''
-                SELECT COUNT(*)
-                FROM sales_history AS sh
-                LEFT JOIN partners AS p ON p.partner_id = sh.partner_id
-                LEFT JOIN products AS pr ON pr.product_id = sh.product_id
-                WHERE p.partner_id IS NULL OR pr.product_id IS NULL
-                '''
-            )
-            broken_foreign_keys = cursor.fetchone()[0]
+            continue
+        cursor.execute(insert_query, row)
+        inserted += 1
+    return inserted
 
-    write_rejections(rejections)
-    print(f'partners imported: {partners_count}')
-    print(f'products imported: {products_count}')
-    print(f'sales imported: {sales_count}')
-    print(f'rows rejected: {len(rejections)} ({REJECTIONS_PATH.name})')
-    print(f'broken foreign keys after import: {broken_foreign_keys}')
+
+def verify_rows(cursor, table, expected_rows):
+    columns = TABLE_COLUMNS[table]
+    query = sql.SQL('SELECT {} FROM {} WHERE {} = %s').format(
+        sql.SQL(', ').join(map(sql.Identifier, columns)),
+        sql.Identifier(table), sql.Identifier(columns[0]),
+    )
+    for expected in expected_rows:
+        cursor.execute(query, (expected[0],))
+        actual = cursor.fetchone()
+        if actual is None or tuple(actual) != tuple(expected):
+            raise ValueError(f'Проверка загрузки не пройдена: {table}, ID={expected[0]}')
+
+
+def run_etl(raw_dir=RAW_DIR, output_path=REJECTIONS_PATH):
+    partners, products, sales, rejections = transform_sources(raw_dir)
+    datasets = {'partners': partners, 'products': products, 'sales_history': sales}
+    datasets.update(load_demo_catalogs())
+    schema_sql = (ROOT_DIR / 'schema.sql').read_text(encoding='utf-8')
+    # Ошибка записи отчета должна произойти до изменения БД.
+    write_rejections(rejections, output_path)
+    connection = get_connection()
+    try:
+        with connection:
+            with connection.cursor() as cursor:
+                cursor.execute(schema_sql)
+                cursor.execute(
+                    'LOCK TABLE partners, products, sales_history, product_types, material_types '
+                    'IN SHARE ROW EXCLUSIVE MODE'
+                )
+                stats = {}
+                for table, rows in datasets.items():
+                    inserted = merge_rows(cursor, table, rows)
+                    verify_rows(cursor, table, rows)
+                    stats[table] = {'inserted': inserted, 'unchanged': len(rows) - inserted}
+                cursor.execute((ROOT_DIR / 'sync_partner_sequence.sql').read_text(encoding='utf-8'))
+                cursor.execute('SELECT check_name, invalid_count FROM data_quality_checks WHERE invalid_count <> 0')
+                failures = cursor.fetchall()
+                if failures:
+                    raise ValueError(f'Проверки целостности не пройдены: {failures}')
+    finally:
+        connection.close()
+    for table, counts in stats.items():
+        print(f'{table}: added={counts["inserted"]}, unchanged={counts["unchanged"]}')
+    print(f'rows rejected: {len(rejections)} ({output_path})')
+    return stats
 
 
 if __name__ == '__main__':
-    load_dotenv(ROOT_DIR / '.env')
-    if PREVIOUS_BACKEND is not None:
-        load_dotenv(PREVIOUS_BACKEND / '.env', override=False)
-    run_etl()
+    parser = argparse.ArgumentParser(description='Безопасный импорт без удаления и перезаписи записей.')
+    parser.add_argument('--check-only', action='store_true', help='Проверить CSV без подключения к БД и записи отчета.')
+    args = parser.parse_args()
+    if args.check_only:
+        partners, products, sales, rejections = transform_sources()
+        print(f'partners={len(partners)}, products={len(products)}, sales={len(sales)}')
+        print(f'rejections={rejections}')
+    else:
+        load_dotenv(ROOT_DIR / '.env')
+        if PREVIOUS_BACKEND is not None:
+            load_dotenv(PREVIOUS_BACKEND / '.env', override=False)
+        run_etl()

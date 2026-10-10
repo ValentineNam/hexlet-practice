@@ -18,7 +18,7 @@
             <label class="field field-wide">Наименование *<input name="company_name" maxlength="255" autocomplete="organization" required /></label>
             <label class="field">Тип партнера *<select name="partner_type" required><option value="" disabled selected>Выберите тип</option><option>ООО</option><option>АО</option><option>ЗАО</option><option>ИП</option><option>ПАО</option></select></label>
             <label class="field">ИНН *<input name="inn" inputmode="numeric" pattern="([0-9]{10}|[0-9]{12})" minlength="10" maxlength="12" placeholder="10 или 12 цифр" required /><small>10 цифр для организации, 12 для ИП</small></label>
-            <label class="field">Рейтинг *<input name="rating" type="number" min="0" max="5" step="1" required /><small>Целое число от 0 до 5</small></label>
+            <label class="field">Рейтинг *<input name="rating" type="number" min="0" max="2147483647" step="1" required /><small>Целое число от 0 до 2147483647</small></label>
             <label class="field">Адрес<input name="address" maxlength="500" autocomplete="street-address" /></label>
           </div></section>
           <section class="form-section"><div class="section-heading"><span>02</span><div><h2>Контакты</h2><p>Связь и ответственное лицо</p></div></div><div class="field-grid">

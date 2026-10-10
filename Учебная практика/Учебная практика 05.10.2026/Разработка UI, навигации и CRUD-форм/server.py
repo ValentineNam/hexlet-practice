@@ -61,18 +61,10 @@ logging.basicConfig(
     ],
 )
 
-PARTNER_TYPES = {'ООО', 'АО', 'ЗАО', 'ПАО', 'ИП'}
-PARTNER_FIELDS = (
-    'company_name',
-    'partner_type',
-    'inn',
-    'rating',
-    'address',
-    'director',
-    'phone',
-    'email',
-)
-
+validation_module = load_module('october_validation', ETL_DIR / 'validation.py')
+PARTNER_TYPES = validation_module.PARTNER_TYPES
+PARTNER_FIELDS = validation_module.PARTNER_FIELDS
+validate_partner = validation_module.validate_partner
 
 def get_db_connection():
     schema_name = os.environ.get('DB_SCHEMA', 'practice_2026_10_05')
@@ -88,45 +80,6 @@ def get_db_connection():
         connect_timeout=5,
         options=f'-c search_path={schema_name}',
     )
-
-
-def validate_partner(payload):
-    if not isinstance(payload, dict):
-        raise ValueError('Ожидался JSON-объект с данными партнера.')
-
-    partner = {field: payload.get(field) for field in PARTNER_FIELDS}
-    partner['company_name'] = str(partner['company_name'] or '').strip()
-    partner['partner_type'] = str(partner['partner_type'] or '').strip().upper()
-    partner['inn'] = str(partner['inn'] or '').strip()
-    partner['address'] = str(partner['address'] or '').strip()
-    partner['director'] = str(partner['director'] or '').strip()
-    partner['phone'] = str(partner['phone'] or '').strip()
-    partner['email'] = str(partner['email'] or '').strip().lower()
-
-    if not partner['company_name']:
-        raise ValueError('Укажите наименование партнера.')
-    if partner['partner_type'] not in PARTNER_TYPES:
-        raise ValueError('Выберите корректный тип партнера.')
-    if not re.fullmatch(r'\d{10}|\d{12}', partner['inn']):
-        raise ValueError('ИНН должен содержать 10 или 12 цифр.')
-    if not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', partner['email']):
-        raise ValueError('Укажите корректный email.')
-
-    try:
-        rating = int(partner['rating'])
-    except (TypeError, ValueError) as error:
-        raise ValueError('Рейтинг должен быть целым числом от 0 до 5.') from error
-
-    if isinstance(partner['rating'], bool) or str(partner['rating']).strip() != str(rating):
-        raise ValueError('Рейтинг должен быть целым числом от 0 до 5.')
-    if rating < 0 or rating > 5:
-        raise ValueError('Рейтинг должен быть целым числом от 0 до 5.')
-
-    partner['rating'] = rating
-    partner['phone'] = partner['phone'] or None
-    partner['address'] = partner['address'] or None
-    partner['director'] = partner['director'] or None
-    return partner
 
 
 def build_logo(company_name, partner_id):

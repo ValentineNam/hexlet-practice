@@ -105,8 +105,8 @@ export class PartnerEditWindow {
     if (!companyName.value.trim()) return [companyName, 'Введите наименование партнера.'];
     if (!/^\d{10}$|^\d{12}$/.test(inn.value.trim())) return [inn, 'ИНН должен содержать 10 или 12 цифр.'];
     if (!email.value.trim() || !email.validity.valid) return [email, 'Введите корректный email.'];
-    if (!/^\d+$/.test(rating.value) || Number(rating.value) < 0 || Number(rating.value) > 5) {
-      return [rating, 'Рейтинг должен быть целым числом от 0 до 5.'];
+    if (!/^\d+$/.test(rating.value) || Number(rating.value) < 0 || Number(rating.value) > 2147483647) {
+      return [rating, 'Рейтинг должен быть целым числом от 0 до 2147483647.'];
     }
     return null;
   }

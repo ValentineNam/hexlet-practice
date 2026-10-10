@@ -5,6 +5,20 @@ import server
 
 
 class FinalApplicationBackendTests(unittest.TestCase):
+    def test_api_uses_shared_etl_validator(self):
+        self.assertIs(server.validate_partner, server.validation_module.validate_partner)
+        payload = {
+            'company_name': '  Тест   компании ', 'partner_type': 'ооо',
+            'inn': '1234567890', 'rating': 6, 'email': ' TEST@EXAMPLE.RU ',
+        }
+        result = server.validate_partner(payload)
+        self.assertEqual(result['rating'], 6)
+        self.assertEqual(result['company_name'], 'Тест компании')
+        self.assertEqual(result['email'], 'test@example.ru')
+        payload['inn'] = '12345678901'
+        with self.assertRaises(ValueError):
+            server.validate_partner(payload)
+
     def test_discount_boundaries(self):
         self.assertEqual(server.discount_module.calculate_partner_discount(9999), 0)
         self.assertEqual(server.discount_module.calculate_partner_discount(10000), 5)
