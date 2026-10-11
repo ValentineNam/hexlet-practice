@@ -1,0 +1,15 @@
+# Local runtime artifacts for this practice only
+.venv/
+.env
+.env.*
+!.env.example
+*.log
+*.log.*
+*.tmp
+*.temp
+*.swp
+*~
+.tmp/
+tmp/
+__pycache__/
+*.py[cod]
