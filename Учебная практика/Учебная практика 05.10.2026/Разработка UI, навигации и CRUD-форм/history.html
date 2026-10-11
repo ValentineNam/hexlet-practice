@@ -9,15 +9,16 @@
   </head>
   <body>
     <div class="app-shell">
-      <header class="topbar"><a class="brand" href="index.html" class="back-to-register"><img src="favicon.svg" alt="" width="36" height="36" /><span>CRM <i>/</i> Партнеры</span></a><span class="topbar-note">Партнеры по продажам</span></header>
+      <header class="topbar"><a class="brand back-to-register" href="index.html"><img src="favicon.svg" alt="" width="36" height="36" /><span>CRM <i>/</i> Партнеры</span></a><span class="topbar-note">Партнеры по продажам</span></header>
       <main>
-        <div class="page-heading"><div><p class="eyebrow">История продаж</p><h1 id="historyTitle">История реализации продукции</h1></div><a class="button button-secondary" href="index.html" class="back-to-register">← К реестру</a></div>
+        <div class="page-heading"><div><p class="eyebrow">История продаж</p><h1 id="historyTitle">История реализации продукции</h1></div><a class="button button-secondary back-to-register" href="index.html">← К реестру</a></div>
         <section class="history-partner" id="partnerSummary" hidden><span class="history-mark" id="partnerMark"></span><div><small>Партнер</small><h2 id="partnerName"></h2></div><span id="historyCount" class="history-count"></span></section>
         <p id="historyMessage" class="empty-state" role="status">Загрузка истории...</p>
         <div id="historyTableWrap" class="history-table-wrap" hidden><table class="history-table"><thead><tr><th>Наименование продукции</th><th>Количество (шт.)</th><th>Дата продажи</th></tr></thead><tbody id="historyRows"></tbody></table></div>
       </main>
       <footer class="app-footer"><span>Партнерская сеть</span><span>CRM · 2026</span></footer>
     </div>
+    <dialog class="message-dialog" id="messageDialog" aria-labelledby="dialogTitle" aria-describedby="dialogMessage"><div class="dialog-content"><span id="dialogIcon" class="dialog-icon" aria-hidden="true"></span><div><h2 id="dialogTitle"></h2><p id="dialogMessage"></p></div></div><div class="dialog-actions" id="dialogActions"></div></dialog>
     <script type="module" src="history-app.js"></script>
   </body>
 </html>

@@ -12,7 +12,7 @@
       <header class="topbar"><a class="brand" href="index.html"><img src="favicon.svg" alt="" width="36" height="36" /><span>CRM <i>/</i> Производство</span></a><span class="topbar-note">Расчет сырья</span></header>
       <main>
         <div class="page-heading"><div><p class="eyebrow">Бизнес-логика</p><h1>Расход материала</h1></div><a class="button button-secondary" href="index.html">← К реестру</a></div>
-        <div class="calculator-layout"><form id="calculatorForm" class="calculator-form"><div class="field-grid">
+        <div class="calculator-layout"><form id="calculatorForm" class="calculator-form" novalidate><div class="field-grid">
           <label class="field">Тип продукции<select name="product_type_id" required disabled><option value="">Загрузка...</option></select></label>
           <label class="field">Тип материала<select name="material_type_id" required disabled><option value="">Загрузка...</option></select></label>
           <label class="field">Количество продукции<input name="quantity" type="number" step="1" inputmode="numeric" placeholder="Например, 100" required /></label>
@@ -29,6 +29,7 @@
       </main>
       <footer class="app-footer"><span>Расчеты производства</span><span>CRM · 2026</span></footer>
     </div>
+    <dialog class="message-dialog" id="messageDialog" aria-labelledby="dialogTitle" aria-describedby="dialogMessage"><div class="dialog-content"><span id="dialogIcon" class="dialog-icon" aria-hidden="true"></span><div><h2 id="dialogTitle"></h2><p id="dialogMessage"></p></div></div><div class="dialog-actions" id="dialogActions"></div></dialog>
     <script type="module" src="calculator-app.js"></script>
   </body>
 </html>

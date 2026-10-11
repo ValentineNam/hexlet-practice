@@ -64,13 +64,16 @@ class FinalBackendSecurityTests(unittest.TestCase):
             'email': 'safe@example.test',
         }
 
-        partner_id = server.save_partner(None, partner)
-
-        query, parameters = self.cursor.execute.call_args.args
-        self.assertEqual(partner_id, 810)
-        self.assertNotIn(injection, query)
-        self.assertIn(injection, parameters)
-        self.assertEqual(query.count('%s'), len(parameters))
+        for existing_id in (None, 810):
+            with self.subTest(existing_id=existing_id):
+                partner_id = server.save_partner(existing_id, partner)
+                query, parameters = self.cursor.execute.call_args.args
+                self.assertEqual(partner_id, 810)
+                self.assertNotIn(injection, query)
+                self.assertIn(injection, parameters)
+                self.assertEqual(query.count('%s'), len(parameters))
+                if existing_id is not None:
+                    self.assertEqual(parameters[-1], existing_id)
 
     def test_partner_input_validation_rejects_negative_rating(self):
         partner = {

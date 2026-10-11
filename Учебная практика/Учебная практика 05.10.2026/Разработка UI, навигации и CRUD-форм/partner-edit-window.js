@@ -8,6 +8,7 @@ export class PartnerEditWindow {
     this.partnerId = Number(new URLSearchParams(location.search).get('partner_id'));
     this.initialSnapshot = '';
     this.busy = false;
+    this.leaveApproved = false;
     this.promptOpen = false;
     this.loaded = false;
     this.saveButton.disabled = true;
@@ -17,7 +18,7 @@ export class PartnerEditWindow {
     this.bindNavigation();
     this.form.addEventListener('submit', (event) => this.save(event));
     window.addEventListener('beforeunload', (event) => {
-      if (this.hasChanges() && !this.busy) {
+      if (this.hasChanges() && !this.leaveApproved) {
         event.preventDefault();
         event.returnValue = '';
       }
@@ -58,7 +59,7 @@ export class PartnerEditWindow {
       this.loaded = true;
       this.saveButton.disabled = false;
     } catch (error) {
-      await this.notifications.alert('error', 'Не удалось загрузить карточку', `${error.message}\n\nПроверьте настройки PostgreSQL и повторите попытку.`);
+      await this.notifications.alert('error', 'Не удалось загрузить карточку', `${error.message}\n\n1. Вернитесь в реестр и проверьте наличие партнера.\n2. При недоступности сервера обратитесь к администратору.\n3. Повторите открытие карточки.`);
       location.href = 'index.html';
     }
   }
@@ -98,7 +99,7 @@ export class PartnerEditWindow {
     );
     this.promptOpen = false;
     if (leave) {
-      this.busy = true;
+      this.leaveApproved = true;
       location.href = this.backUrl();
     }
   }
@@ -130,7 +131,7 @@ export class PartnerEditWindow {
     if (this.busy || !this.loaded) return;
     const validationError = this.validate();
     if (validationError) {
-      await this.notifications.alert('error', 'Проверьте данные', validationError[1]);
+      await this.notifications.alert('error', 'Проверьте данные', `${validationError[1]}\n\n1. Исправьте указанное поле.\n2. Нажмите «Сохранить» повторно.`);
       validationError[0].focus();
       return;
     }
@@ -141,6 +142,7 @@ export class PartnerEditWindow {
     this.busy = true;
     this.saveButton.disabled = true;
     this.saveButton.textContent = 'Сохранение...';
+    this.form.inert = true;
     try {
       const response = await fetch(endpoint, {
         method: this.mode === 'edit' ? 'PUT' : 'POST',
@@ -149,13 +151,15 @@ export class PartnerEditWindow {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+      this.leaveApproved = true;
       location.href = `index.html?saved=1&selected=${encodeURIComponent(result.id)}`;
       return;
     } catch (error) {
       this.busy = false;
+      this.form.inert = false;
       this.saveButton.disabled = false;
       this.saveButton.textContent = 'Сохранить';
-      await this.notifications.alert('error', 'Сохранение не выполнено', `${error.message}\n\nПроверьте обязательные поля, уникальность ИНН/email и подключение к базе.`);
+      await this.notifications.alert('error', 'Сохранение не выполнено', `${error.message}\n\n1. Проверьте поля и уникальность ИНН/email.\n2. При ошибке соединения обратитесь к администратору.\n3. Повторите сохранение. Введенные данные сохранены в форме.`);
     }
   }
 }

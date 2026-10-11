@@ -1,5 +1,3 @@
-import { NotificationDialog } from './notifications.js';
-
 export class MainWindow {
   constructor(root, notifications) {
     this.root = root;
@@ -40,7 +38,8 @@ export class MainWindow {
     } catch (error) {
       this.count.textContent = 'Ошибка загрузки';
       this.renderMessage('Не удалось загрузить реестр.');
-      await this.notifications.alert('error', 'Ошибка загрузки', `${error.message}\n\nПроверьте сервер, .env и доступность PostgreSQL, затем обновите страницу.`);
+      await this.notifications.alert('error', 'Ошибка загрузки', `${error.message}\n\n1. Проверьте подключение к серверу.\n2. При недоступности базы обратитесь к администратору.\n3. Обновите страницу.`);
+      return;
     }
     if (new URLSearchParams(location.search).get('saved') === '1') {
       await this.notifications.alert('information', 'Изменения сохранены', 'Данные партнера записаны в базу, список обновлен.');
@@ -88,7 +87,9 @@ export class MainWindow {
     const contacts = document.createElement('span');
     contacts.className = 'partner-contacts';
     contacts.textContent = `${partner.phone || 'Телефон не указан'} · ${partner.email}`;
-    details.append(name, contacts);
+    const rating = document.createElement('span');
+    rating.textContent = `Рейтинг: ${partner.rating}`;
+    details.append(name, contacts, rating);
     const discount = document.createElement('span');
     discount.className = 'partner-discount';
     discount.textContent = `${partner.discount}%`;

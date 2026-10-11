@@ -1,6 +1,7 @@
 export class PartnerHistoryWindow {
-  constructor(root) {
+  constructor(root, notifications) {
     this.root = root;
+    this.notifications = notifications;
     this.partnerId = Number(new URLSearchParams(location.search).get('partner_id'));
     this.title = root.querySelector('#historyTitle');
     this.message = root.querySelector('#historyMessage');
@@ -14,7 +15,7 @@ export class PartnerHistoryWindow {
 
   async open() {
     if (!Number.isInteger(this.partnerId) || this.partnerId <= 0) {
-      this.showMessage('Не выбран партнер. Вернитесь в реестр и выберите запись.', true);
+      await this.showError('Не выбран партнер.');
       return;
     }
 
@@ -24,8 +25,13 @@ export class PartnerHistoryWindow {
       if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
       this.render(result);
     } catch (error) {
-      this.showMessage(`Не удалось загрузить историю: ${error.message}. Проверьте соединение и повторите попытку.`, true);
+      await this.showError(`Не удалось загрузить историю: ${error.message}`);
     }
+  }
+
+  async showError(message) {
+    this.showMessage(message, true);
+    await this.notifications.alert('error', 'История недоступна', `${message}\n\n1. Вернитесь в реестр и выберите существующего партнера.\n2. При ошибке соединения обратитесь к администратору.\n3. Откройте историю повторно.`);
   }
 
   render(result) {

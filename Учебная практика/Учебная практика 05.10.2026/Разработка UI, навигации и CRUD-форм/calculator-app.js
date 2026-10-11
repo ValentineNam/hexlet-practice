@@ -1,3 +1,6 @@
+import { NotificationDialog } from './notifications.js';
+
+const notifications = new NotificationDialog(document.querySelector('#messageDialog'));
 const form = document.getElementById('calculatorForm');
 const productSelect = form.elements.product_type_id;
 const materialSelect = form.elements.material_type_id;
@@ -12,6 +15,14 @@ function showResult(state, value, message) {
   messageNode.textContent = message;
 }
 
+async function showError(message, steps) {
+  showResult('error', 'Ошибка', message);
+  await notifications.alert('error', 'Расчет невозможен', `${message}\n\n${steps}`);
+}
+
+const connectionSteps = '1. Проверьте подключение к серверу.\n2. При недоступности PostgreSQL или справочников обратитесь к администратору.\n3. Обновите страницу и повторите расчет.';
+const inputSteps = '1. Выберите оба типа.\n2. Введите положительное целое количество и положительные параметры.\n3. Повторите расчет.';
+
 async function loadCatalogs() {
   try {
     const response = await fetch('/api/material/catalogs', { cache: 'no-store' });
@@ -23,7 +34,7 @@ async function loadCatalogs() {
     materialSelect.disabled = false;
     button.disabled = false;
   } catch (error) {
-    showResult('error', 'Ошибка', `Не удалось загрузить справочники: ${error.message}`);
+    await showError(`Не удалось загрузить справочники: ${error.message}`, connectionSteps);
   }
 }
 
@@ -37,7 +48,12 @@ function populate(select, values, labelFor) {
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
-  if (!form.reportValidity()) return;
+  if (button.disabled) return;
+  if (!form.checkValidity()) {
+    await showError('Заполните обязательные поля корректными числами.', inputSteps);
+    form.querySelector(':invalid')?.focus();
+    return;
+  }
 
   const payload = Object.fromEntries(new FormData(form).entries());
   for (const key of ['product_type_id', 'material_type_id', 'quantity']) {
@@ -54,12 +70,12 @@ form.addEventListener('submit', async (event) => {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
     if (result.material_requirement === -1) {
-      showResult('error', 'Расчет невозможен', 'Проверьте ID типов, положительные параметры и количество больше нуля.');
+      await showError('Указаны неизвестные типы или некорректные параметры.', inputSteps);
       return;
     }
     showResult('success', `${result.material_requirement.toLocaleString('ru-RU')} ед.`, 'Материал с учетом брака; результат округлен вверх.');
   } catch (error) {
-    showResult('error', 'Ошибка', `Не удалось рассчитать материал: ${error.message}`);
+    await showError(`Не удалось рассчитать материал: ${error.message}`, connectionSteps);
   } finally {
     button.disabled = false;
   }
